@@ -1,5 +1,6 @@
 //tokenRing_simulate.c
 //Name: Muhammad Ali
+//Student ID: 1115335
 
 /*
  * The program simulates a Token Ring LAN by forking off a process
@@ -13,57 +14,47 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <sys/ipc.h>
-#include <sys/shm.h>
+#include <sys/shm.h>   
 #include <sys/sem.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-
 #include "tokenRing.h"
-#define TOKEN_AVAILABLE 0x00 
-#define TOKEN_UNAVAILABLE 0x01  
-
+#define TOKEN_AVAILABLE     0x00 
+#define TOKEN_UNAVAILABLE   0x01  
 
 /*
- * This function is the body of a child process emulating a node.
+ * This function is now run by a thread (instead of a child process).
  */
 void
-token_node(control, num)
-	struct TokenRingData *control;
-	int num;
+token_node(struct TokenRingData *control, int num)
 {
-
-    int rcv_state = TOKEN_FLAG, not_done=1, sending = 0, len, receivedIndexPosition = 0, received = 0; 
+    int rcv_state = TOKEN_FLAG, not_done=1, sending = 0; 
+    int len, receivedIndexPosition = 0, received = 0;
     unsigned char byte;
-    
 
     /*
 	 * If this is node #0, start the ball rolling by creating the
 	 * token.
 	 */
-    if (!num){send_byte(control, num, TOKEN_AVAILABLE);} //SEND IF AVAILABLE, if num is 0. 
 
-    /*
+    if (num == 0) {
+        // Node #0 starts out with the token
+        send_byte(control, num, TOKEN_AVAILABLE);
+    }
+
+     /*
 	 * Loop around processing data, until done. WE break out once termination is flagged
 	 */
     while (not_done) {
         //check term flag before wainting on any semaphor
-        if (control ->  shared_ptr-> node[num].terminate == 1) {
-
+        if (control->shared_ptr->node[num].terminate == 1) {
 #ifdef DEBUG
             fprintf(stderr, "TERMINATING NODE (First Check): %d\n", num);
 #endif
-            //signal all them semaphores to mak sre term (RUN TOKENSIM 10000 times make it consistent). Note: Workign after assignment due? Server issues? might be redundant.
-            SIGNAL_SEM(control, CRIT);
-            for(int i = 0; i < N_NODES; i++){
-                SIGNAL_SEM(control, EMPTY(i));
-                SIGNAL_SEM(control, FILLED(i));
-                SIGNAL_SEM(control, TO_SEND(i));
-            }
+            //ust break so thread can return
             break;
         }
-
-
         //If sending is ON --> the node enters a critical section to send packet (SAFE).
         if (sending==1) 
         {
