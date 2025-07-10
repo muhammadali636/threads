@@ -1,7 +1,5 @@
-//tokenRing_setup.c
-//Name: Muhammad Ali
-//Student ID: 1115335
-
+// tokenRing_setup.c
+// Name: Muhammad Ali
  
 /*
  * The program simulates a Token Ring LAN by creating a thread
@@ -35,9 +33,14 @@
      int nodeNum;
  };
  
+/* static thread handles & args for join */
+static pthread_t threads[N_NODES];
+static struct thread_args targs[N_NODES];
+ 
  void *threadTokenNode(void *args) {
      struct thread_args *t = (struct thread_args *)args;
      token_node(t->control, t->nodeNum);
+     pthread_exit(NULL);
      return NULL;  
  }
  
@@ -77,12 +80,12 @@
 
     //dont need shmid shmget  
 
-	/*
-	 * Now, create the semaphores, by creating the semaphore set.
-	 * Under Linux, semaphore sets are stored in an area of memory
-	 * handled much like a shared region. (A semaphore set is simply
-	 * a bunch of semaphores allocated to-gether.)
-	 */
+ 	/*
+ 	 * Now, create the semaphores, by creating the semaphore set.
+ 	 * Under Linux, semaphore sets are stored in an area of memory
+ 	 * handled much like a shared region. (A semaphore set is simply
+ 	 * a bunch of semaphores allocated to-gether.)
+ 	 */
      control->semid = semget(IPC_PRIVATE, NUM_SEM, 0600);
      if (control->semid < 0) {
          fprintf(stderr, "Can't create semaphore set\n");
@@ -90,9 +93,9 @@
      }
  
     /*
-	 * and initialize them.
-	 * Semaphores are meaningless if they are not initialized.
-	 */
+ 	 * and initialize them.
+ 	 * Semaphores are meaningless if they are not initialized.
+ 	 */
      for (i = 0; i < N_NODES; i++) {
          INITIALIZE_SEM(control, FILLED(i), 0);
          INITIALIZE_SEM(control, TO_SEND(i), 1);
@@ -101,8 +104,8 @@
      INITIALIZE_SEM(control, CRIT, 1);
 
  	/*
-	 * And initialize the shared data
-	 */
+ 	 * And initialize the shared data
+ 	 */
      for (i = 0; i < N_NODES; i++) {
          control->shared_ptr->node[i].data_xfer = 0;
          control->shared_ptr->node[i].to_send.token_flag = 0;
@@ -131,8 +134,7 @@
  runSimulation(struct TokenRingData *control, int numberOfPackets)
  {
      int i, num, to;
-     pthread_t threads[N_NODES]; //arr of thread IDs
-     struct thread_args targs[N_NODES];  //arr of arg structs.
+     // arr of thread IDs and args are static above
  
      //create thread for each ring node
      for (i = 0; i < N_NODES; i++) {
@@ -142,9 +144,9 @@
      }
  
     /*
-	 * Loop around generating packets at random.
-	 * (the parent)
-	 */
+ 	 * Loop around generating packets at random.
+ 	 * (the parent)
+ 	 */
      for (i = 0; i < numberOfPackets; i++) {
          num = random() % N_NODES;
          WAIT_SEM(control, TO_SEND(num));
@@ -177,9 +179,9 @@
      bzero(&zeroSemun, sizeof(zeroSemun));
  
     /*
-	 * Now wait for all nodes to finish sending and then tell them
-	 * to terminate.
-	 */
+ 	 * Now wait for all nodes to finish sending and then tell them
+ 	 * to terminate.
+ 	 */
      for (i = 0; i < N_NODES; i++) {
          WAIT_SEM(control, TO_SEND(i));
      }
@@ -191,8 +193,8 @@
  
      
     /*
-	 * Wait for the node processes to terminate.
-	 */
+ 	 * Wait for the node processes to terminate.
+ 	 */
      for (i = 0; i < N_NODES; i++) {
          send_byte(control, i, TOKEN_AVAILABLE);
      }
@@ -200,7 +202,13 @@
      /*
       * wait on each thread
       */
-     //print results
+     for (i = 0; i < N_NODES; i++) {
+         pthread_join(threads[i], NULL);
+     }
+
+     /*
+      * print results
+      */
      for (i = 0; i < N_NODES; i++) {
          printf("Node %d: sent=%d received=%d\n",
                 i,
@@ -230,4 +238,3 @@
      va_end(vargs);
      exit(5);
  }
- 

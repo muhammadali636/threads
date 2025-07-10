@@ -75,13 +75,15 @@ struct shared_data {
  * POSIX Now says this can't be in sem.h, so we have to put it in
  * ourselves? (It was in sys/sem.h in RedHat 5.2)
  */
+ 
+ /*
 union semun {
 	int val;
 	struct semid_ds *buf;
 	unsigned short int *array;
 	struct seminfo *__buf;
 };
-
+*/
 
 #define	WAIT_SEM(c,s) { \
 	struct sembuf sb; \

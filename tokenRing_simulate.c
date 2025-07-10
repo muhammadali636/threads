@@ -1,6 +1,5 @@
-//tokenRing_simulate.c
-//Name: Muhammad Ali
-//Student ID: 1115335
+// tokenRing_simulate.c
+// Name: Muhammad Ali
 
 /*
  * The program simulates a Token Ring LAN by forking off a process
@@ -34,9 +33,9 @@ token_node(struct TokenRingData *control, int num)
     unsigned char byte;
 
     /*
-	 * If this is node #0, start the ball rolling by creating the
-	 * token.
-	 */
+     * If this is node #0, start the ball rolling by creating the
+     * token.
+     */
 
     if (num == 0) {
         // Node #0 starts out with the token
@@ -44,8 +43,8 @@ token_node(struct TokenRingData *control, int num)
     }
 
      /*
-	 * Loop around processing data, until done. WE break out once termination is flagged
-	 */
+     * Loop around processing data, until done. WE break out once termination is flagged
+     */
     while (not_done) {
         //check term flag before wainting on any semaphor
         if (control->shared_ptr->node[num].terminate == 1) {
@@ -60,13 +59,12 @@ token_node(struct TokenRingData *control, int num)
         {
             WAIT_SEM(control, CRIT);
             send_pkt(control, num);
-            SIGNAL_SEM(control, CRIT);
-
             //if the token is setreset the sending flag and update the rcv state before getting a byte
             if (control->snd_state == TOKEN_FLAG){  
                 rcv_state = TOKEN_FLAG;
                 sending = 0;
             }
+            SIGNAL_SEM(control, CRIT);
         }
         //otherwise rcv a bite.
         byte = rcv_byte(control, num);
@@ -81,8 +79,8 @@ token_node(struct TokenRingData *control, int num)
         }
         
         /*
-		 * Handle the byte, based upon current state.
-		 */
+         * Handle the byte, based upon current state.
+         */
         //STATE MACHINA
         switch (rcv_state) {
             case TOKEN_FLAG:
@@ -252,4 +250,4 @@ rcv_byte(control, num)
     byte_to_return = control -> shared_ptr -> node[num].data_xfer;
     SIGNAL_SEM(control, EMPTY(num)); //SIGNAL Buf EMPTY
     return byte_to_return;
-} 
+}
