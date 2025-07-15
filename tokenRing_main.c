@@ -1,5 +1,4 @@
 //tokenRing_main.c
-//Name: Muhammad Ali 
 
 /*
  * The program simulates a Token Ring LAN by forking off a process

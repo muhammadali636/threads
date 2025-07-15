@@ -1,5 +1,4 @@
 //tokenRing.h
-//Name: Muhammad Ali
 
 #ifndef __TOKEN_CONTROL_HEADER__
 #define __TOKEN_CONTROL_HEADER__
